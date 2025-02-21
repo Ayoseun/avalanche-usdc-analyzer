@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-run-script:
+run:
 	@echo "Running script.sh..."
 	@chmod +x ./scripts/script.sh
 	@./scripts/script.sh
@@ -12,7 +12,7 @@ run-script:
 	@npm run migration:run
 
 	@echo "Building Docker image..."
-	@docker build -t my-app .
+	@docker build -t avalanche-usdc-analyzer .
 
 	@echo "Starting services with Docker Compose..."
 	@docker compose up -d

@@ -23,7 +23,7 @@ export class AvalancheGateway {
     
     this.usdcContract = new ethers.Contract(
       this.configService.envConfig.CONTRACT_ADDRESS,
-      ['event Transfer(address indexed from, address indexed to, uint256 value)'],
+      AVALANCHE_CONSTANTS.ABI,
       this.provider
     );
   }
@@ -42,8 +42,8 @@ export class AvalancheGateway {
     const events = await retry(async () => {
       return this.usdcContract.queryFilter(
         'Transfer',
-        filters.fromBlock,
-        filters.toBlock
+        10000000,
+        10000010
       );
     });
 

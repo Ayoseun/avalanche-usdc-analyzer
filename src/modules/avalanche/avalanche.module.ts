@@ -14,6 +14,7 @@ import { DatabaseService } from '../../database/database.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../../database/entities/account.entity';
 import { Transaction } from '../../database/entities/transaction.entity';
+import { LoggerService } from '../../utils/logger';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { Transaction } from '../../database/entities/transaction.entity';
     DatabaseModule,
     CacheModules,
   ],
-  providers: [AvalancheService, AvalancheGateway,DatabaseService,],
+  providers: [AvalancheService, AvalancheGateway,DatabaseService,LoggerService],
   exports: [AvalancheService],
 })
 export class AvalancheModule {}

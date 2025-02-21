@@ -31,48 +31,50 @@ export class AvalancheService {
       this.logger.log('Processing is already ongoing.');
       return;
     }
-
+  
     this.isProcessing = true;
     this.logger.log('Starting block processing...');
+  
     try {
-      const latestProcessedBlock = await this.cacheService.getLatestBlock() || 0;
+      const START_BLOCK = 11975000; // Approximate block number for Jan 1, 2022
+      const latestProcessedBlock = (await this.cacheService.getLatestBlock()) || START_BLOCK;
       this.logger.log(`Latest processed block: ${latestProcessedBlock}`);
+  
       const currentBlock = await this.avalancheGateway.getLatestBlockNumber();
       this.logger.log(`Current network block: ${currentBlock}`);
-
+  
       if (currentBlock <= latestProcessedBlock) {
         this.logger.log('No new blocks to process.');
         return;
       }
-
-      const fromBlock = latestProcessedBlock + 1;
-      const toBlock = Math.min(
-        fromBlock + AVALANCHE_CONSTANTS.RPC_BATCH_SIZE,
-        currentBlock
-      );
+  
+      const fromBlock = Math.max(latestProcessedBlock + 1, START_BLOCK);
+      const toBlock = Math.min(fromBlock + AVALANCHE_CONSTANTS.RPC_BATCH_SIZE, currentBlock);
       this.logger.log(`Processing blocks from ${fromBlock} to ${toBlock}`);
-
+  
       const events = await this.avalancheGateway.getTransferEvents({
         fromBlock,
         toBlock,
       });
       this.logger.log(`Fetched ${events.length} transfer events`);
-
+  
       await this.processTransferEvents(events);
       this.logger.log('Transfer events processed successfully');
+  
       await this.cacheService.setLatestBlock(toBlock);
       this.logger.log(`Updated cache with latest block: ${toBlock}`);
+  
       await this.updateStatistics();
       this.logger.log('Statistics updated');
-
+  
     } catch (error) {
-     this.logger.error(`Error processing blocks: ${error}`);
+      this.logger.error(`Error processing blocks: ${error}`);
     } finally {
       this.isProcessing = false;
       this.logger.log('Block processing completed');
     }
   }
-
+  
   /**
    * Process a list of new transfer events.
    *
