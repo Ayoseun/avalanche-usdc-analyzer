@@ -11,10 +11,10 @@ run:
 	@echo "Running migrations..."
 	@npm run migration:run
 
-	@echo "Building Docker image..."
-	@docker build -t avalanche-usdc-analyzer .
+	# @echo "Building Docker image..."
+	# @docker build -t avalanche-usdc-analyzer .
 
-	@echo "Starting services with Docker Compose..."
-	@docker compose up -d
+	# @echo "Starting services with Docker Compose..."
+	# @docker compose up -d
 
 .PHONY: run-script

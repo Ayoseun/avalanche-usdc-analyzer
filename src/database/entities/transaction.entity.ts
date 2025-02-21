@@ -1,33 +1,3 @@
-// // src/modules/avalanche/transfer.entity.ts
-// import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
-
-// @Entity()
-// export class TransferEntity {
-//   @PrimaryGeneratedColumn()
-//   id: number;
-
-//   @Column()
-//   @Index()
-//   from: string;
-
-//   @Column()
-//   @Index()
-//   to: string;
-
-//   @Column('numeric')
-//   value: string;
-
-//   @Column()
-//   transactionHash: string;
-
-//   @Column()
-//   blockNumber: number;
-
-//   @Column('timestamp')
-//   @Index()
-//   timestamp: Date;
-// }
-
 
 
 // entities/transaction.entity.ts

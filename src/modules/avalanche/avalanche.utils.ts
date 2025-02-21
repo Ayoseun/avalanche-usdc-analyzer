@@ -3,7 +3,7 @@
 // avalanche.utils.ts
 import { AVALANCHE_CONSTANTS } from './avalanche.constants';
 import { ethers } from 'ethers';
-import { TransferEvent } from './avalanche.interface';
+
 
 export const formatUSDCAmount = (amount: string): number => {
   return parseFloat(ethers.formatUnits(amount, AVALANCHE_CONSTANTS.DECIMALS));

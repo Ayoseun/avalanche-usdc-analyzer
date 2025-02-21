@@ -18,27 +18,75 @@ export class DatabaseService {
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
     private readonly logger: LoggerService,
-  ) {}
+  ) {
 
-  async saveTransaction(transactionData: Partial<Transaction>): Promise<Transaction> {
-    const transaction = this.transactionRepository.create(transactionData);
-    return this.transactionRepository.save(transaction);
+  }
+ 
+  async getOrCreateAccount(address: string, isReceiving: boolean = false): Promise<Account|null> {
+    this.logger.log('Getting or creating account...');
+    let account = await this.accountRepository.findOneBy({ address });
+    
+    if (!account && isReceiving) {
+      // Only create a new account with initial stats if they're receiving
+      account = this.accountRepository.create({
+        address,
+        totalVolumeUSDC: 0,
+        totalTransactions: 0,
+        lastBalance: 0,
+        firstSeen: new Date(),
+        lastActive: new Date(),
+      });
+      await this.accountRepository.save(account);
+      this.logger.log(`Created new account for ${address} (receiving transaction)`);
+    }
+    
+    return account;
   }
 
+  async saveTransaction(transactionData: Partial<Transaction>): Promise<Transaction> {
+    this.logger.log('Saving transaction to database...');
+    
+    // Ensure sender account exists (but don't create if it doesn't)
+    const senderAccount = await this.getOrCreateAccount(transactionData.from!.address, false);
+    
+    // Always create/update recipient account
+    const recipientAccount = await this.getOrCreateAccount(transactionData.to!.address, true);
+    
+    // Create and save the transaction
+    const transaction = this.transactionRepository.create(transactionData);
+    const savedTransaction = await this.transactionRepository.save(transaction);
+    
+    // Update stats for existing accounts
+    if (senderAccount) {
+      await this.updateAccountStats(senderAccount.address, transactionData.amount!, false);
+    }
+    
+    if (recipientAccount) {
+      await this.updateAccountStats(recipientAccount.address, transactionData.amount!, true);
+    }
+    
+    return savedTransaction;
+  }
   async updateAccountStats(address: string, amount: number, isReceiving: boolean): Promise<void> {
-    let account = await this.accountRepository.findOne({ where: { address } });
+    this.logger.log(`Updating account stats for ${address}...`);
+    const account = await this.accountRepository.findOne({ where: { address } });
     
     if (!account) {
-      account = this.accountRepository.create({ address });
+      this.logger.log(`Skipping stats update for non-existent account ${address}`);
+      return;
     }
 
+    // Normalize amount to handle precision
+    const normalizedAmount = Math.round(amount * 1000000) / 1000000;
+    
     account.totalTransactions += 1;
-    account.totalVolumeUSDC += Math.abs(amount);
+    account.totalVolumeUSDC += Math.abs(normalizedAmount);
     account.lastBalance = isReceiving ? 
-      account.lastBalance + amount : 
-      account.lastBalance - amount;
+      account.lastBalance + normalizedAmount :
+      account.lastBalance - normalizedAmount;
     account.lastActive = new Date();
 
+    this.logger.log(`Stats update for ${address}: balance=${account.lastBalance}, transactions=${account.totalTransactions}`);
     await this.accountRepository.save(account);
   }
 
@@ -104,7 +152,7 @@ export class DatabaseService {
       return result.totalVolume || 0;
     } catch (error) {
       // Log error or handle it as needed
-      console.error('Error fetching total volume:', error);
+      this.logger.error('Error fetching total volume:', error);
       return 0;
     }
   }
