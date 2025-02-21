@@ -1,13 +1,43 @@
-FROM node:14
+# Use official Node.js image as base
+FROM node:18-alpine AS builder
 
-WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /app
 
-COPY package*.json ./
+# Copy package.json and lock file first (to leverage Docker cache)
+COPY package.json package-lock.json ./
 
+# Install dependencies
 RUN npm install
 
+# Copy the rest of the application
 COPY . .
 
+# Copy environment file based on build argument
+ARG ENV=production
+RUN cp config/env/${ENV}.env .env
+
+# Build the Next.js application
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine AS runner
+
+# Set working directory
+WORKDIR /app
+
+# Copy built files from builder stage
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.env .env
+
+# Set environment variable for Next.js
+ENV NODE_ENV=production
+
+# Expose port
 EXPOSE 3000
 
-CMD ["npm", "run", "start:prod"]
+# Start the Next.js app
+CMD ["npm", "run", "start"]

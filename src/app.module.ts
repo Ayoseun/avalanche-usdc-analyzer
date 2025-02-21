@@ -7,12 +7,14 @@ import { CacheModules } from './cache/cache.module';
 import { AppController } from './app.controller';
 import { CacheService } from './cache/cache.service';
 import { LoggerService } from './utils/logger';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
     ConfigModule,
     AvalancheModule,
     CacheModules,
+    DatabaseModule
   ],
   providers: [CacheService,LoggerService],
   controllers: [AppController],

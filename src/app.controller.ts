@@ -7,14 +7,11 @@ import { LoggerService } from './utils/logger';
 
 @Controller()
 export class AppController {
-  private  cacheService: CacheService
+
   private readonly appService: AppService
-  private logger: LoggerService
-  private cache:Cache
+
 
   constructor() {
-    
-    this.cacheService = new CacheService(this.cache,this.logger);
   }
 
   @Get("/")

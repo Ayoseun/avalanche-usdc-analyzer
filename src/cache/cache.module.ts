@@ -13,13 +13,15 @@ import { ConfigService } from 'src/config/config.service';
         ttl: 60 * 5, // 5 minutes
         max: 100, // Maximum number of items in cache
         isGlobal: true, // Make the cache manager globally available
-        store: "memory",
+        store:redisStore,
         host: configService.envConfig.REDIS_HOST ,
         port: configService.envConfig.REDIS_PORT ,
         password: configService.envConfig.REDIS_PASSWORD,
         prefix: 'usdc-analyzer:',
+      
       }),
       inject: [ConfigService],
+ 
     })
   ],
   providers: [CacheService, LoggerService, ConfigService],

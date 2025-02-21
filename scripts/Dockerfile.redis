@@ -1,0 +1,5 @@
+# /scripts/Dockerfile.redis
+FROM redis:alpine
+
+# Set the command to run Redis with a password
+CMD ["redis-server", "--requirepass", "avalanche"]

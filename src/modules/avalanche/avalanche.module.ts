@@ -1,17 +1,28 @@
+
+
+// avalanche.module.ts
 import { Module } from '@nestjs/common';
-import { CacheModule } from '@nestjs/cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { AvalancheController } from './avalanche.controller';
+import { ScheduleModule } from '@nestjs/schedule';
+
 import { AvalancheService } from './avalanche.service';
-import { ConfigService } from '../../config/config.service';
-import { LoggerService } from '../../utils/logger';
 import { AvalancheGateway } from './avalanche.gateway';
-import { CacheService } from '../../cache/cache.service';
+
+
+import { DatabaseModule } from '../../database/database.module';
+import { CacheModules } from '../../cache/cache.module';
+import { DatabaseService } from '../../database/database.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Account } from '../../database/entities/account.entity';
+import { Transaction } from '../../database/entities/transaction.entity';
 
 @Module({
-  imports: [CacheModule.register(     {ttl: 60 * 5}, )],
-  controllers: [AvalancheController],
-  providers: [AvalancheService, AvalancheGateway,CacheService, ConfigService, LoggerService],
+  imports: [
+    TypeOrmModule.forFeature([Account, Transaction]),
+    ScheduleModule.forRoot(),
+    DatabaseModule,
+    CacheModules,
+  ],
+  providers: [AvalancheService, AvalancheGateway,DatabaseService,],
   exports: [AvalancheService],
 })
 export class AvalancheModule {}
