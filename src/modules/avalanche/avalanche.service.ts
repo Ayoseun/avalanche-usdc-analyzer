@@ -85,6 +85,8 @@ export class AvalancheService {
     // Iterate over each transfer event
     for (const event of events) {
       this.logger.log(`Processing event ${event.transactionHash}`);
+      const fromAccount = await this.databaseService.getOrCreateAccount(event.from);
+      const toAccount = await this.databaseService.getOrCreateAccount(event.to);
       // Format the amount of USDC transferred
       const amount = formatUSDCAmount(event.amount);
 
@@ -99,7 +101,7 @@ export class AvalancheService {
         // Sender account
         from: {
           // Sender address
-          address: event.from,
+          address: fromAccount!.address,
           // Total volume of USDC transferred in/out of this account
           totalVolumeUSDC: 0,
           // Number of transactions in/out of this account
@@ -118,7 +120,7 @@ export class AvalancheService {
         // Recipient account
         to: {
           // Recipient address
-          address: event.to,
+          address:toAccount!.address,
           // Total volume of USDC transferred in/out of this account
           totalVolumeUSDC: 0,
           // Number of transactions in/out of this account
@@ -144,7 +146,7 @@ export class AvalancheService {
 
        this.logger.log(`Updated sender account ${event.from}`);
       // Update the total volume and number of transactions for the sender account
-      await this.databaseService.updateAccountStats(event.from, -amount, false);
+      await this.databaseService.updateAccountStats(event.from, amount, false);
        this.logger.log(`Updated recipient account ${event.to}`);
       // Update the total volume and number of transactions for the recipient account
       await this.databaseService.updateAccountStats(event.to, amount, true);

@@ -2,7 +2,7 @@
 import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 import { Transaction } from './transaction.entity';
 
-@Entity()
+@Entity({ name: 'account' })
 export class Account {
   @PrimaryColumn()
   address: string;

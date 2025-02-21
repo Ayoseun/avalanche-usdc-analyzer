@@ -42,8 +42,8 @@ export class AvalancheGateway {
     const events = await retry(async () => {
       return this.usdcContract.queryFilter(
         'Transfer',
-        10000000,
-        10000010
+        filters.fromBlock,
+        filters.toBlock
       );
     });
 

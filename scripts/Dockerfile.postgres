@@ -4,7 +4,7 @@ FROM postgres:alpine
 
 ENV POSTGRES_DB=avalanche
 ENV POSTGRES_USER=postgres
-ENV POSTGRES_PASSWORD=avalanche
+ENV POSTGRES_PASSWORD=avalanche_usdc_analyser
 
 EXPOSE 5432
 

@@ -1,101 +1,238 @@
-# avalanche-usdc-analyzer
-This is a **NestJS-based backend** service that **fetches, aggregates, and analyzes USDC transactions** on the Avalanche C-Chain in real-time. It provides RESTful APIs to retrieve **aggregated stats** and **raw transaction data**.
+# Avalanche USDC Transaction Tracker
 
+A NestJS-based service that tracks and analyzes USDC transfers on the Avalanche network. This service provides real-time monitoring, historical data analysis, and API endpoints for querying transaction statistics.
 
 ## Features
-- **Real-time USDC transfer monitoring** (ERC-20 event logs)
-- **Data aggregation** (total transfers, top accounts)
-- **RESTful API** for querying historical and real-time data
-- **Optimized storage & indexing** using PostgreSQL
-- **Caching layer** for performance optimization (Redis)
-- **Automated tests** for reliability (Unit & E2E)
-- **Containerized deployment** using Docker
 
----
+- Real-time USDC transfer monitoring on Avalanche
+- Historical transaction data tracking and analysis
+- Account statistics and balance tracking
+- Volume distribution analysis (hourly/daily/weekly)
+- Caching system for improved performance
+- RESTful API endpoints for data access
+- Transaction sync status monitoring
 
-## **Architecture**
-### **Tech Stack**
-- **Backend:** NestJS (TypeScript)
-- **Blockchain Interaction:** Ethers.js (Avalanche RPC)
-- **Database:** PostgreSQL (TypeORM)
-- **Caching:** Redis (for optimized queries)
-- **API Docs:** Swagger / OpenAPI
+## Technology Stack
 
-### **Folder Structure**
-Refer to the detailed folder structure in the repository.
+- **Framework**: NestJS
+- **Database**: PostgreSQL with TypeORM
+- **Caching**: Redis
+- **Blockchain Interaction**: ethers.js
+- **Task Scheduling**: @nestjs/schedule
+- **API Documentation**: Swagger/OpenAPI
 
----
+## Prerequisites
 
-## **Setup & Installation**
-### 1️⃣ **Clone the Repository**
-```sh
-git clone https://github.com/yourusername/avalanche-usdc-analyzer.git
+- Node.js (v16 or higher)
+- PostgreSQL (v13 or higher)
+- Redis (v6 or higher)
+- Access to an Avalanche RPC node
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_NAME=avalanche_tracker
+
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Avalanche RPC Configuration
+AVALANCHE_RPC_URL=your_rpc_url
+CONTRACT_ADDRESS=0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E
+
+# Application Configuration
+PORT=3000
+NODE_ENV=development
 ```
-cd avalanche-usdc-analyzer
-2️⃣ Install Dependencies
-```sh
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/avalanche-usdc-tracker.git
+
+# Install dependencies
+cd avalanche-usdc-tracker
 npm install
-```
-3️⃣ Set Up Environment Variables
-Copy .env.example to .env and fill in the required values:
 
-```sh
-cp .env.example .env
-```
-- env variables
-AVALANCHE_RPC_URL=https://api.avax.network/ext/bc/C/rpc
-USDC_CONTRACT_ADDRESS=0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E
-DATABASE_URL=postgres://user:password@localhost:5432/usdc_db
-REDIS_URL=redis://localhost:6379
+# Setup database
+npm run typeorm:migration:run
 
-4️⃣ Run Database Migrations
-```sh
-npm run migration:run
-```
-5️⃣ Start the Server
-```sh
+# Start the application
 npm run start:dev
 ```
 
-The API will be available at:
-http://localhost:3000/api
+## Quick start
+To get started quickly run the following make command
 
-- API Endpoints
-| Method | Endpoint               | Description                           |
-|--------|------------------------|---------------------------------------|
-| GET    | /api/usdc/transfers    | Fetch paginated USDC transactions     |
-| GET    | /api/usdc/stats        | Get aggregated USDC transfer stats    |
-
-API documentation is available at http://localhost:3000/api-docs
-
-###Testing
 ```sh
+
+make run
+
+```
+
+## Architecture Overview
+
+### Core Components
+
+1. **AvalancheService (`avalanche.service.ts`)**
+   - Manages block processing and event tracking
+   - Handles transaction synchronization
+   - Updates account statistics and volume metrics
+   - Key methods:
+     - `processNewBlocks()`: Processes new blocks for USDC transfers
+     - `getAccountTransfers()`: Retrieves transfer history for an account
+     - `getVolumeDistribution()`: Gets volume distribution over time
+     - `getSyncStatus()`: Checks current sync status
+
+2. **DatabaseService (`database.service.ts`)**
+   - Handles all database operations
+   - Manages account and transaction records
+   - Provides data aggregation functions
+
+3. **CacheService**
+   - Implements caching strategy for frequently accessed data
+   - Reduces database load
+   - Improves API response times
+
+### Data Flow
+
+```
+Block Event → AvalancheGateway → AvalancheService → DatabaseService
+                                        ↓
+                                  CacheService
+                                        ↓
+                                   API Endpoints
+```
+
+## API Endpoints
+
+### Account Operations
+
+```typescript
+GET /api/accounts/:address
+```
+Returns account statistics and transfer history
+
+**Response:**
+```json
+{
+  "address": "0x...",
+  "balance": 1000.00,
+  "totalSent": 500.00,
+  "totalReceived": 1500.00,
+  "transactionCount": 10,
+  "lastActivityTimestamp": "2024-02-21T04:46:59.000Z",
+  "transactions": [...]
+}
+```
+
+### Volume Statistics
+
+```typescript
+GET /api/stats/volume/:timeframe
+```
+Returns volume distribution (hourly/daily/weekly)
+
+**Parameters:**
+- timeframe: 'hourly' | 'daily' | 'weekly'
+
+### Sync Status
+
+```typescript
+GET /api/status/sync
+```
+Returns current synchronization status
+
+**Response:**
+```json
+{
+  "latestProcessedBlock": 12345678,
+  "currentNetworkBlock": 12345700,
+  "blocksRemaining": 22,
+  "isSynced": false,
+  "syncPercentage": "99.98",
+  "estimatedTimeRemaining": 440
+}
+```
+
+## Block Processing Logic
+
+The service processes USDC transfers using the following strategy:
+
+1. **Block Scanning**
+   - Starts from block 11975000 (Jan 1, 2022)
+   - Processes blocks in batches for efficiency
+   - Maintains sync state in cache
+
+2. **Event Processing**
+   - Monitors USDC transfer events
+   - Updates account balances and statistics
+   - Maintains transaction history
+
+3. **Statistics Updates**
+   - Updates 24-hour volume metrics
+   - Refreshes top accounts list
+   - Updates volume distribution data
+
+## Performance Considerations
+
+- Uses batch processing for block scanning
+- Implements caching for frequently accessed data
+- Maintains indexes on critical database columns
+- Uses database transactions for data integrity
+
+## Monitoring and Maintenance
+
+The service provides several monitoring endpoints:
+
+```typescript
+GET /api/status/health
+GET /api/status/rpc
+GET /api/status/cache
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Unit tests
 npm run test
+
+# E2E tests
 npm run test:e2e
-```
-### Deployment
-#### Docker (Production)
-```sh
-docker-compose up --build
-```
-### Manual Deployment
-1. Set up PostgreSQL and Redis.
-2. Run the application with:
-```sh
-npm run start:prod
-```
-### Security & Best Practices
-- Rate limiting & request validation to prevent abuse
-- Error handling & logging using a centralized logger
-- Database indexing & caching for high performance
-- CI/CD pipeline for automated deployments (GitHub Actions)
 
-### Contributing
-1. Fork the repository.
-2. Create a feature branch: git checkout -b feature-name
-3. Commit changes: git commit -m "Add feature"
-4. Push to the branch: git push origin feature-name
-5. Submit a pull request.
+# Test coverage
+npm run test:cov
+```
 
-### License
-This project is licensed under the MIT License.
+### Database Migrations
+
+```bash
+# Generate a migration
+npm run typeorm:migration:generate -- -n MigrationName
+
+# Run migrations
+npm run typeorm:migration:run
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
