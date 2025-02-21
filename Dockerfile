@@ -14,8 +14,8 @@ RUN npm install
 COPY . .
 
 # Copy environment file based on build argument
-ARG ENV=production
-RUN cp config/env/${ENV}.env .env
+ARG ENV=development
+RUN cp src/config/env/${ENV}.env .env
 
 # Build the Next.js application
 RUN npm run build
@@ -27,14 +27,12 @@ FROM node:18-alpine AS runner
 WORKDIR /app
 
 # Copy built files from builder stage
-COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/.env .env
 
 # Set environment variable for Next.js
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 
 # Expose port
 EXPOSE 3000

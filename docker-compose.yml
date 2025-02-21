@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   postgres:
@@ -6,9 +5,9 @@ services:
     container_name: usdc_postgres
     restart: always
     environment:
-      POSTGRES_USER: usdc_user
-      POSTGRES_PASSWORD: usdc_password
-      POSTGRES_DB: usdc_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: avalanche_usdc_analyser
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
@@ -18,6 +17,9 @@ services:
     image: redis:7
     container_name: usdc_redis
     restart: always
+    environment:
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379 
     ports:
       - "6379:6379"
     volumes:
@@ -33,8 +35,6 @@ services:
     depends_on:
       - postgres
       - redis
-    env_file:
-      - NODE_ENV=production
     ports:
       - "3000:3000"
     volumes:
