@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>USDC Transfers Realtime Monitor</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { color: #333; }
+    #transfers-container { margin-top: 20px; }
+    .transfer-item {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+    .transfer-item:hover { background-color: #f0f0f0; }
+    .transfer-time { color: #666; font-size: 0.9em; }
+    .transfer-amount { font-weight: bold; color: #2a9d8f; }
+    .transfer-hash { font-family: monospace; word-break: break-all; }
+    .connection-status {
+      padding: 8px 16px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .connected { background-color: #d4edda; color: #155724; }
+    .disconnected { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h1>USDC Transfers Realtime Monitor</h1>
+  <div id="connection-status" class="connection-status disconnected">Disconnected</div>
+  <div id="transfers-container"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const socket = io('ws://localhost:3000'); // Replace with your actual server URL
+      const transfersContainer = document.getElementById('transfers-container');
+      const connectionStatus = document.getElementById('connection-status');
+      
+      // Connection events
+      socket.on('connect', () => {
+        connectionStatus.textContent = 'Connected';
+        connectionStatus.className = 'connection-status connected';
+      });
+      
+      socket.on('disconnect', () => {
+        connectionStatus.textContent = 'Disconnected';
+        connectionStatus.className = 'connection-status disconnected';
+      });
+
+      // Handle recent transfers (sent on connection)
+      socket.on('recent-transfers', (transfers) => {
+        transfersContainer.innerHTML = '<h2>Recent Transfers</h2>';
+        transfers.forEach(addTransferToDOM);
+      });
+      
+      // Handle new transfers in real-time
+      socket.on('new-transfer', (transfer) => {
+        // Add to the beginning of the container
+        const existingContent = transfersContainer.innerHTML;
+        const newTransferHtml = createTransferHtml(transfer);
+        transfersContainer.innerHTML = newTransferHtml + existingContent;
+        
+        // Flash animation for new transfer
+        const newTransferElement = transfersContainer.children[0];
+        newTransferElement.style.backgroundColor = '#d4edda';
+        setTimeout(() => {
+          newTransferElement.style.transition = 'background-color 1s';
+          newTransferElement.style.backgroundColor = '#f9f9f9';
+        }, 100);
+      });
+      
+      function addTransferToDOM(transfer) {
+        transfersContainer.innerHTML += createTransferHtml(transfer);
+      }
+      
+      function createTransferHtml(transfer) {
+        const timestamp = new Date(transfer.timestamp || Date.now()).toLocaleString();
+        return `
+          <div class="transfer-item">
+            <div class="transfer-time">${timestamp}</div>
+            <div class="transfer-hash">TX: ${transfer.txHash}</div>
+            <div>From: ${transfer.from}</div>
+            <div>To: ${transfer.to}</div>
+            <div class="transfer-amount">${transfer.value} USDC</div>
+          </div>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>

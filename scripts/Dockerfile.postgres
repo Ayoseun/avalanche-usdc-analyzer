@@ -1,0 +1,12 @@
+# scripts/Dockerfile.postgres
+
+FROM postgres:alpine
+
+ENV POSTGRES_DB=avalanche
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=avalanche
+
+EXPOSE 5432
+
+CMD ["postgres"]
+
